@@ -11,7 +11,7 @@ from sklearn.metrics import f1_score
 from torchvision import transforms, utils
 from model.birnn import RNN
 
-def train(model,train_data,test_data,criterion,optimizer,device):
+def train(args,model,train_data,test_data,criterion,optimizer,device):
     def convert(data,device):
         for name in data:
             if(isinstance(data[name],torch.Tensor)):
@@ -19,7 +19,7 @@ def train(model,train_data,test_data,criterion,optimizer,device):
         return data
 
     print("start training")
-    for now in range(epoch):
+    for now in range(args.epoch):
         print(now)
 
         loss_sum = 0
@@ -42,7 +42,7 @@ def train(model,train_data,test_data,criterion,optimizer,device):
             loss_sum += loss.detach().item()
 
         print('*'*10)
-        print('training loss:{0} acc:{1}/{2}'.format(loss_sum,count,len(train_data)*64))
+        print('training loss:{0} acc:{1}/{2}'.format(loss_sum,count,len(train_data)*args.batch_size))
         loss_sum = 0
         count = 0
         model.eval()
@@ -65,15 +65,15 @@ def train(model,train_data,test_data,criterion,optimizer,device):
                 ans['label'].extend(data['label'].view(-1).cpu().tolist())
                 ans['output'].extend(pred.view(-1).cpu().tolist())
 
-        print('testing loss:{0} acc:{1}/{2}'.format(loss_sum,count,len(train_data)*64))
-        print('F1:{0}'.format( f1_score(ans['label'], ans['output'], average='macro') ))
+        print('testing loss:{0} acc:{1}/{2}'.format(loss_sum,count,len(test_data)*args.batch_size))
+        print('F1:{0}'.format( f1_score(ans['label'], ans['output'], average='micro') ))
 
         torch.save(model.state_dict(), './save_model/step_{0}.pkl'.format(now))
 
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--batch_size', default=64, type=int)
+    parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--dropout', default=0, type=float)
     parser.add_argument('--epoch', default=200, type=int)
     parser.add_argument('--gpu', default=0, type=int)
@@ -106,7 +106,7 @@ def main():
     optimizer = optim.Adam(model.parameters(),lr=args.learning_rate)
     criterion = nn.CrossEntropyLoss(reduction='sum')
 
-    train(model,train_loader,test_loader,criterion,optimizer,device)
+    train(args,model,train_loader,test_loader,criterion,optimizer,device)
     
 
 
