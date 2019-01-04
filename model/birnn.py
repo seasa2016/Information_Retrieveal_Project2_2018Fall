@@ -1,17 +1,18 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 class RNN(nn.Module):
     def __init__(self,token,args):
         super(RNN,self).__init__()
         
-        self.word_emb = nn.Embedding(len(token['tokens']),args.hidden_dim,padding_idx=0)
-        self.ner_emb = nn.Embedding(len(token['nodes']),args.hidden_dim,padding_idx=0)
-        self.edge_emb = nn.Embedding(3,args.hidden_dim,padding_idx=0)
+        self.word_emb = nn.Embedding(len(token['tokens']),args.word_dim,padding_idx=0)
+        self.ner_emb = nn.Embedding(len(token['nodes']),args.word_dim,padding_idx=0)
+        self.edge_emb = nn.Embedding(3,args.word_dim,padding_idx=0)
     
         self.rnn = nn.LSTM(
-            input_size=args.hidden_dim,
+            input_size=args.word_dim,
             hidden_size=args.hidden_dim,
             num_layers=args.num_layer,
             batch_first=args.batch_first,
@@ -19,6 +20,7 @@ class RNN(nn.Module):
             bidirectional=args.bidirectional
         )
         
+        self.word_size = args.word_dim
         self.hidden_size = args.hidden_dim
         self.num_layer = args.num_layer
         self.batch_first = args.batch_first
@@ -29,7 +31,21 @@ class RNN(nn.Module):
         self.act_1 = nn.ReLU()
         self.dense_2 = nn.Linear(32,len(token['edges']))
         
-        
+        if(args.mode == 'pretrain'):
+            self.load()
+            self.word_emb.weight.requires_grad = False
+            print("here",self.word_emb.weight.requires_grad)
+
+    def load(self):
+        with open('./data/embedding/glove.6B.100d.txt') as f:
+            arr = np.zeros((self.word_emb.weight.shape[0],self.word_emb.weight.shape[1]),dtype=np.float32)
+            for i,line in enumerate(f):
+                for j,num in enumerate(line.strip().split()[1:]):
+                    arr[i+1,j] = float(num)
+                    
+            self.word_emb.weight = nn.Parameter(torch.tensor(arr))
+
+
     def forward(self,data,data_len,data_ner,data_point):
         def pack(seq,seq_length):
             sorted_seq_lengths, indices = torch.sort(seq_length, descending=True)

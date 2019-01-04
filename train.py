@@ -78,12 +78,14 @@ def main():
     parser.add_argument('--epoch', default=200, type=int)
     parser.add_argument('--gpu', default=0, type=int)
 
+    parser.add_argument('--word_dim', default=100, type=int)
     parser.add_argument('--hidden_dim', default=128, type=int)
     parser.add_argument('--batch_first', default=True, type=bool)
     parser.add_argument('--bidirectional', default=True, type=bool)
     parser.add_argument('--num_layer', default=2, type=int)
 
     parser.add_argument('--learning_rate', default=0.005, type=float)
+    parser.add_argument('--mode', required=True, type=str)
 
     args = parser.parse_args()
 
@@ -93,17 +95,22 @@ def main():
         device = torch.device('cpu')
 
     print("loading data")
-    train_data = itemDataset('./data/train.json',transform=transforms.Compose([ToTensor()]))
+    train_data = itemDataset('./data/train.json',mode=args.mode,transform=transforms.Compose([ToTensor()]))
     train_loader = DataLoader(train_data, batch_size=args.batch_size,shuffle=True, num_workers=12,collate_fn=collate_fn)
     
-    test_data = itemDataset('./data/test.json',transform=transforms.Compose([ToTensor()]))
+    test_data = itemDataset('./data/test.json',mode=args.mode,transform=transforms.Compose([ToTensor()]))
     test_loader = DataLoader(test_data, batch_size=args.batch_size,shuffle=True, num_workers=12,collate_fn=collate_fn)
 
     print("setting model")
     model = RNN(train_data.token,args)
     model = model.to(device)
     print(model)
-    optimizer = optim.Adam(model.parameters(),lr=args.learning_rate)
+    
+    #for name,d in model.named_parameters():
+    #    print(name,d.requires_grad)
+    
+    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()),lr=args.learning_rate)
+    
     criterion = nn.CrossEntropyLoss(reduction='sum')
 
     train(args,model,train_loader,test_loader,criterion,optimizer,device)

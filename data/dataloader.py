@@ -9,6 +9,7 @@ import sys
 
 class itemDataset(Dataset):
     def __init__(self,file_name,mode='train',transform=None):
+        self.mode = mode
 
         if(mode=='test'):
             self.token = {}
@@ -22,6 +23,17 @@ class itemDataset(Dataset):
             for name in ['nodes','edges','tokens']:
                 self.token[name] =  {}
                 self.token[name]['pad'] = 0
+        elif(mode=='pretrain'):
+            self.token = {}
+            for name in ['nodes','edges','tokens']:
+                self.token[name] =  {}
+                self.token[name]['_pad'] = 0
+            #self.token['tokens']['unk'] = 1
+            
+            with open('./data/embedding/glove.6B.100d.txt') as f:
+                for line in f:
+                    line = line.split()[0]
+                    self.token['tokens'][line] = len(self.token['tokens'])
                 
         self.read_json(file_name)
         
@@ -30,6 +42,12 @@ class itemDataset(Dataset):
                 with open('./data/token/{0}'.format(name),'w') as f:
                     for name in self.token[name]:
                         f.write("{0}\n".format(name))
+        elif(mode=='pretrain'):
+            for name in ['nodes','edges','tokens']:
+                with open('./data/token/{0}'.format(name),'w') as f:
+                    for name in self.token[name]:
+                        f.write("{0}\n".format(name))
+
         self.transform = transform
 
     def read_json(self,file_name):
@@ -45,11 +63,17 @@ class itemDataset(Dataset):
             ans = []
             for word in data:
                 word = word.lower()
-                try:
-                    ans.append(self.token['tokens'][word])
-                except:
-                    self.token['tokens'][word] = len(self.token['tokens'])
-                    ans.append(self.token['tokens'][word])
+                if(self.mode == 'train'):
+                    try:
+                        ans.append(self.token['tokens'][word])
+                    except:
+                        self.token['tokens'][word] = len(self.token['tokens'])
+                        ans.append(self.token['tokens'][word])
+                else:
+                    try:
+                        ans.append(self.token['tokens'][word])
+                    except:
+                        ans.append(0)
             return ans
 
         self.data = []
