@@ -6,16 +6,12 @@ import os
 import argparse
 import torch.optim as optim
 import torch.nn as nn
+from sklearn.metrics import f1_score
 
 from torchvision import transforms, utils
 from model.birnn import RNN
 
-batch_size = 128
-check = 10
-epoch = 500
-num_workers=16
-
-def train(model,train_data,criterion,optimizer,device):
+def train(model,train_data,test_data,criterion,optimizer,device):
     def convert(data,device):
         for name in data:
             if(isinstance(data[name],torch.Tensor)):
@@ -23,11 +19,11 @@ def train(model,train_data,criterion,optimizer,device):
         return data
 
     print("start training")
-    count = 0
     for now in range(epoch):
         print(now)
 
         loss_sum = 0
+        count = 0
         model.train()
         for i,data in enumerate(train_data):
             #first convert the data into cuda
@@ -38,18 +34,41 @@ def train(model,train_data,criterion,optimizer,device):
             loss = criterion(out,data['label']) 
             _,pred = torch.topk(out,1)
             pred = pred.view(-1)
-            count += torch.sum( data['label'] == pred )
+            count += torch.sum( data['label'] == pred ).item()
             
             model.zero_grad()
             loss.backward()
             optimizer.step()
             loss_sum += loss.detach().item()
 
-        if(now%check==0):
-            print('*'*10)
-            print('training loss:{0} acc:{1}/{2}'.format(loss_sum,count.data,25946))
-            count = 0
-        torch.save(model.state_dict(), './save_model/last.pkl')
+        print('*'*10)
+        print('training loss:{0} acc:{1}/{2}'.format(loss_sum,count,len(train_data)*64))
+        loss_sum = 0
+        count = 0
+        model.eval()
+        
+        ans={'label':[],'output':[]}
+
+        for i,data in enumerate(test_data):
+            #first convert the data into cuda
+            data = convert(data,device)
+            
+            with torch.no_grad():
+                out = model(data['sent'],data['sent_len'],data['node'],data['edge'])
+                
+                loss = criterion(out,data['label']) 
+                _,pred = torch.topk(out,1)
+                pred = pred.view(-1)
+                count += torch.sum( data['label'] == pred ).item()
+                loss_sum += loss.detach().item()
+
+                ans['label'].extend(data['label'].view(-1).cpu().tolist())
+                ans['output'].extend(pred.view(-1).cpu().tolist())
+
+        print('testing loss:{0} acc:{1}/{2}'.format(loss_sum,count,len(train_data)*64))
+        print('F1:{0}'.format( f1_score(ans['label'], ans['output'], average='macro') ))
+
+        torch.save(model.state_dict(), './save_model/step_{0}.pkl'.format(now))
 
 def main():
     parser = argparse.ArgumentParser()
@@ -75,7 +94,10 @@ def main():
 
     print("loading data")
     train_data = itemDataset('./data/train.json',transform=transforms.Compose([ToTensor()]))
-    train_loader = DataLoader(train_data, batch_size=args.batch_size,shuffle=True, num_workers=1,collate_fn=collate_fn)
+    train_loader = DataLoader(train_data, batch_size=args.batch_size,shuffle=True, num_workers=12,collate_fn=collate_fn)
+    
+    test_data = itemDataset('./data/test.json',transform=transforms.Compose([ToTensor()]))
+    test_loader = DataLoader(test_data, batch_size=args.batch_size,shuffle=True, num_workers=12,collate_fn=collate_fn)
 
     print("setting model")
     model = RNN(train_data.token,args)
@@ -84,7 +106,7 @@ def main():
     optimizer = optim.Adam(model.parameters(),lr=args.learning_rate)
     criterion = nn.CrossEntropyLoss(reduction='sum')
 
-    train(model,train_loader,criterion,optimizer,device)
+    train(model,train_loader,test_loader,criterion,optimizer,device)
     
 
 
