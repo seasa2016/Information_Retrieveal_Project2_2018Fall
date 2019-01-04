@@ -66,7 +66,8 @@ def train(args,model,train_data,test_data,criterion,optimizer,device):
                 ans['output'].extend(pred.view(-1).cpu().tolist())
 
         print('testing loss:{0} acc:{1}/{2}'.format(loss_sum,count,len(test_data)*args.batch_size))
-        print('F1:{0}'.format( f1_score(ans['label'], ans['output'], average='micro') ))
+        print('F1 macro:{0}'.format( f1_score(ans['label'], ans['output'], average='macro') ))
+        print('F1 micro:{0}'.format( f1_score(ans['label'], ans['output'], average='micro') ))
 
         torch.save(model.state_dict(), './save_model/step_{0}.pkl'.format(now))
 
@@ -84,7 +85,7 @@ def main():
     parser.add_argument('--bidirectional', default=True, type=bool)
     parser.add_argument('--num_layer', default=2, type=int)
 
-    parser.add_argument('--learning_rate', default=0.005, type=float)
+    parser.add_argument('--learning_rate', default=0.001, type=float)
     parser.add_argument('--mode', required=True, type=str)
 
     args = parser.parse_args()
