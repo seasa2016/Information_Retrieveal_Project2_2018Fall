@@ -138,6 +138,28 @@ def collate_fn(sample):
     
     return data
 
+def collate_fn1(sample):
+    data = {}
+    
+    for name in ['sent_len','label']:
+        data[name] = torch.tensor([_[name] for _ in sample],dtype=torch.long)
+        
+    batch_size,sent_len = len(data['sent_len']),data['sent_len'].max().item()
+    
+    data['sent'] = torch.stack([ torch.cat([ _['sent'],torch.zeros(sent_len-_['sent_len'],dtype=torch.long) ] ) for _ in sample])
+    
+    
+    data['node'] = torch.zeros(batch_size,sent_len,dtype=torch.long)
+    
+    for i in range(len(sample)):
+        for line in sample[i]['nodes']:
+            for num in range(line[0][0],line[0][1]):
+                data['node'][i][num] = line[1]
+    
+    data['edge'] = [ _['edge'] for _ in sample]
+    
+    return data
+
 if(__name__ == '__main__'):
 	data = itemDataset('./train.json',transform=transforms.Compose([ToTensor()]))
 

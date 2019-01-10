@@ -1,5 +1,5 @@
 import torch
-from data.dataloader import itemDataset,ToTensor,collate_fn
+from data.dataloader import itemDataset,ToTensor,collate_fn,collate_fn1
 from torch.utils.data import Dataset,DataLoader
 
 import os
@@ -10,6 +10,7 @@ from sklearn.metrics import f1_score
 
 from torchvision import transforms, utils
 from model.birnn import RNN
+from model.birnn_co import RNNC
 
 def train(args,model,train_data,test_data,criterion,optimizer,device):
     def convert(data,device):
@@ -22,27 +23,44 @@ def train(args,model,train_data,test_data,criterion,optimizer,device):
     for now in range(args.epoch):
         print(now)
 
-        loss_sum = 0
-        count = 0
+        loss_sum = {'ner':0,'relate':0}
+        count = {'ner':0,'relate':0,'total':0}
         model.train()
+        model.zero_grad()
         for i,data in enumerate(train_data):
             #first convert the data into cuda
             data = convert(data,device)
             
             out = model(data['sent'],data['sent_len'],data['node'],data['edge'])
             
+            if(isinstance(out,list)):
+                out[1] = out[1].view(-1)
+
+                loss = criterion(out[1],data['node']) 
+                _,pred = torch.topk(out[1],1)
+                pred = pred.view(-1)
+                count['ner'] += torch.sum( data['node'].view(-1) == pred ).item()    
+                loss_sum['ner'] += loss.detach().item()
+            
+                count['total'] += torch.sum(data['sent_len']).item()
+
+                loss.backward()
+                out = out[0]
+            
+
             loss = criterion(out,data['label']) 
             _,pred = torch.topk(out,1)
             pred = pred.view(-1)
-            count += torch.sum( data['label'] == pred ).item()
+            count['relate'] += torch.sum( data['label'] == pred ).item()
             
-            model.zero_grad()
             loss.backward()
             optimizer.step()
-            loss_sum += loss.detach().item()
+            model.zero_grad()
+            loss_sum['relate'] += loss.detach().item()
 
         print('*'*10)
-        print('training loss:{0} acc:{1}/{2}'.format(loss_sum,count,len(train_data)*args.batch_size))
+        print('training loss:{0} acc_relate:{1}/{2} acc_ner:{3}/{4}'.format(loss_sum,count['relate'],len(train_data)*args.batch_size,
+                                                                        count['ner'],count['total']))
         loss_sum = 0
         count = 0
         model.eval()
@@ -87,6 +105,7 @@ def main():
 
     parser.add_argument('--learning_rate', default=0.001, type=float)
     parser.add_argument('--mode', required=True, type=str)
+    parser.add_argument('--model', required=True, type=str)
 
     args = parser.parse_args()
 
@@ -97,13 +116,21 @@ def main():
 
     print("loading data")
     train_data = itemDataset('./data/train.json',mode=args.mode,transform=transforms.Compose([ToTensor()]))
-    train_loader = DataLoader(train_data, batch_size=args.batch_size,shuffle=True, num_workers=12,collate_fn=collate_fn)
-    
     test_data = itemDataset('./data/test.json',mode=args.mode,transform=transforms.Compose([ToTensor()]))
-    test_loader = DataLoader(test_data, batch_size=args.batch_size,shuffle=True, num_workers=12,collate_fn=collate_fn)
-
+    
+    if(args.model == 'birnn'):
+        train_loader = DataLoader(train_data, batch_size=args.batch_size,shuffle=True, num_workers=12,collate_fn=collate_fn)
+        test_loader = DataLoader(test_data, batch_size=args.batch_size,shuffle=True, num_workers=12,collate_fn=collate_fn)
+    elif(args.model == 'birnn_co'):
+        train_loader = DataLoader(train_data, batch_size=args.batch_size,shuffle=True, num_workers=12,collate_fn=collate_fn1)
+        test_loader = DataLoader(test_data, batch_size=args.batch_size,shuffle=True, num_workers=12,collate_fn=collate_fn1)
+        
     print("setting model")
-    model = RNN(train_data.token,args)
+    if(args.model == 'birnn'):
+        model = RNN(train_data.token,args)
+    elif(args.model == 'birnn_co'):
+        model = RNNC(train_data.token,args)
+    
     model = model.to(device)
     print(model)
     
