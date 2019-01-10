@@ -232,10 +232,20 @@ pred_prob = model.predict([np.array(lexical_feat), np.array(word_position_feat)]
 y_pred = [np.argmax(i) for i in pred_prob]
 
 accuracy = sklearn.metrics.accuracy_score(y_true, y_pred)
-macro_f1 = sklearn.metrics.f1_score(y_true, y_pred, average = 'macro') 
-print(accuracy, macro_f1) # 0.7633955448524985 0.6160218700906733
+precision = sklearn.metrics.precision_score(y_true, y_pred, average = 'macro')
+recall = sklearn.metrics.recall_score(y_true, y_pred, average = 'macro')
+macro_f1 = sklearn.metrics.f1_score(y_true, y_pred, average = 'macro')
+
+print('Accuracy: ', accuracy, '\nPrecision: ', precision, '\nRecall: ', recall, '\nMacro-F1: ', macro_f1) 
+
+# Accuracy:  0.7633955448524985 
+# Precision:  0.8365205630043345 
+# Recall:  0.5870621811621252 
+# Macro-F1:  0.6160218700906733
 
 # Training - loss: 0.5150 - acc: 0.7823 - val_loss: 0.5353 - val_acc: 0.7925
 # Testing Accuracy = 0.7634
+# Testing Precision = 0.8365
+# Testing Recall = 0.5871
 # Testing Macro-F1 = 0.6160
    
