@@ -91,7 +91,7 @@ class RNN(nn.Module):
         mask =  data.eq(0)
 
         word = self.word_emb(data)
-        word = word + self.ner_emb(data_ner)
+		#word = word + self.ner_emb(data_ner)
         word = word + self.edge_emb(data_point)
         
         #query part
