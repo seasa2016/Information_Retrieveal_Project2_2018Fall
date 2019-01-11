@@ -6,6 +6,7 @@
 - Word features
 - Position features
 ## CNN model
-## 
+### without Nodes Information
+### with Nodes Information
 ## Reference
 - Daojian Zeng, Kang Liu, Siwei Lai, Guangyou Zhou, and Jun Zhao. 2014. Relation classification via convolutional deep neural network. In Proceedings of COLING, pages 2335–2344.
