@@ -6,7 +6,7 @@ import os
 import argparse
 import torch.optim as optim
 import torch.nn as nn
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score,recall_score,precision_score
 
 from torchvision import transforms, utils
 from model.birnn import RNN
@@ -36,6 +36,8 @@ def test(args,model,test_data,device):
             ans['output'].extend(pred.view(-1).cpu().tolist())
     print('F1 macro:{0}'.format( f1_score(ans['label'], ans['output'], average='macro') ))
     print('F1 micro:{0}'.format( f1_score(ans['label'], ans['output'], average='micro') ))
+    print('macro precision:{0}'.format( precision_score(ans['label'], ans['output'], average='macro') ))
+    print('macro recall:{0}'.format( recall_score(ans['label'], ans['output'], average='macro') ))
 
 
 def main():
