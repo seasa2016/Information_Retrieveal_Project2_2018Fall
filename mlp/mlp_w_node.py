@@ -23,8 +23,8 @@ K.set_session(sess)
 
 ## Load Data
 # File paths
-file_dir = '/home/b03901008/tap/data/'
-embedding_dir = '/mnt/data/b03901008/word2vec/'
+file_dir = '../data/'
+embedding_dir = '../path_containing_GoogleNews-vectors-negative300.bin/'
 
 train_j = []
 with open(file_dir+'train.json') as f:
