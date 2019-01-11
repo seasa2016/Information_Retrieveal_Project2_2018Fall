@@ -5,3 +5,7 @@
 ## Classification
 - Multiclass (3 kinds of labels for edge)
 - Catboost classifier
+## Execution
+- Set file directory: train.json, test.json
+- Install Catboost package
+- python3 classification.py
