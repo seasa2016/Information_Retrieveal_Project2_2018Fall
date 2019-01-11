@@ -1,5 +1,5 @@
 # Relation Classification via CNN
-## Word2vec model
+> Word2vec model
 ## Features
 ### Lexical Level Features
 ### Sentence Level Features
