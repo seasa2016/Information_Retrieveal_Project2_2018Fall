@@ -1,0 +1,1 @@
+python predict.py {path to train.json} {path to test.json}
