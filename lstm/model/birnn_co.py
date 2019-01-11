@@ -9,7 +9,7 @@ class RNNC(nn.Module):
 		
 		self.word_emb = nn.Embedding(len(token['tokens']),args.word_dim,padding_idx=0)
 		self.edge_emb = nn.Embedding(3,args.word_dim,padding_idx=0)
-		self.ner_emb = nn.Embedding(len(token['nodes']),32)
+		self.ner_emb = nn.Embedding(len(token['nodes']),args.word_dim)
 	
 		self.rnn = nn.LSTM(
 			input_size=args.word_dim,
@@ -28,7 +28,7 @@ class RNNC(nn.Module):
 		self.bidirectional = args.bidirectional
 
 			
-		self.dense_1 = nn.Linear(4*args.hidden_dim+64,32)
+		self.dense_1 = nn.Linear(4*args.hidden_dim,32)
 		self.act_1 = nn.ReLU()
 		self.dense_2 = nn.Linear(32,len(token['edges']))
 		
@@ -89,8 +89,8 @@ class RNNC(nn.Module):
 											output[i][ length[i][j][0] ][self.hidden_size:]] , dim=-1 ) for i in range(len(length))]
 				repre.append(torch.stack(temp,dim=0))
 
-			temp = [torch.cat([ self.ner_emb(ner[i][ length[i][j][1]-1 ]) , self.ner_emb(ner[i][ length[i][j][0] ])] , dim=-1 ) for i in range(ner.shape[0])]
-			repre.append(torch.stack(temp,dim=0))
+			#temp = [torch.cat([ self.ner_emb(ner[i][ length[i][j][1]-1 ]) , self.ner_emb(ner[i][ length[i][j][0] ])] , dim=-1 ) for i in range(ner.shape[0])]
+			#repre.append(torch.stack(temp,dim=0))
 			
 			repre = torch.cat(repre,dim=-1)
 

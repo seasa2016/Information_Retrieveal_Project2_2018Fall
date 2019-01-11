@@ -120,7 +120,7 @@ def main():
 
 	print("loading data")
 	train_data = itemDataset('./data/train.json',mode=args.mode,transform=transforms.Compose([ToTensor()]))
-	test_data = itemDataset('./data/test.json',mode=args.mode,transform=transforms.Compose([ToTensor()]))
+	test_data = itemDataset('./data/test.json',mode='test',transform=transforms.Compose([ToTensor()]))
 	
 	if(args.model == 'birnn'):
 		train_loader = DataLoader(train_data, batch_size=args.batch_size,shuffle=True, num_workers=12,collate_fn=collate_fn)
@@ -134,7 +134,7 @@ def main():
 		model = RNN(train_data.token,args)
 	elif(args.model == 'birnn_co'):
 		model = RNNC(train_data.token,args)
-	#args.model+='no'	
+	args.model+='neer'	
 	model = model.to(device)
 	print(model)
 	if(not os.path.isdir('./save_model/{0}'.format(args.model))):
