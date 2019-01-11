@@ -256,17 +256,19 @@ accuracy = sklearn.metrics.accuracy_score(y_true, y_pred)
 precision = sklearn.metrics.precision_score(y_true, y_pred, average = 'macro')
 recall = sklearn.metrics.recall_score(y_true, y_pred, average = 'macro')
 macro_f1 = sklearn.metrics.f1_score(y_true, y_pred, average = 'macro')
+micro_f1 = sklearn.metrics.f1_score(y_true, y_pred, average = 'micro')
 
-print('Accuracy: ', accuracy, '\nPrecision: ', precision, '\nRecall: ', recall, '\nMacro-F1: ', macro_f1) 
+print('Accuracy: ', accuracy, '\nPrecision: ', precision, '\nRecall: ', recall, '\nMacro-F1: ', macro_f1, '\nMicro-F1: ', micro_f1) 
 
 # Accuracy:  0.9783263094521373 
 # Precision:  0.9630994367531716 
 # Recall:  0.9294201816598232 
 # Macro-F1:  0.9444897354183651
-
+# Micro-F1:  0.9783263094521373
 
 # Training - loss: 0.0486 - acc: 0.9822 - val_loss: 0.0449 - val_acc: 0.9814
 # Testing Accuracy = 0.9783
 # Testing Precision = 0.9631
 # Testing Recall = 0.9294
 # Testing Macro-F1 = 0.9445
+# Testing Micro-F1 = 0.9783
