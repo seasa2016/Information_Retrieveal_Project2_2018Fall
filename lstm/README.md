@@ -1,10 +1,3 @@
-# relation_extraction
----
-##two model
-###output at last timestep
-python
-###output at correspond timestep
-
 # Relation Classification via LSTM
 ### Glove
 please download the pretrain embedding {glove.6B.100d.txt} and put it under ./data/embedding
