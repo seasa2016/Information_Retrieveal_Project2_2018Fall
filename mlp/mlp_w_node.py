@@ -150,7 +150,7 @@ del word2vec
 
 # Organize training data: zero padding to max_seq_length
 seq_len = [len(train_df['word_1'][i]) for i in range(len(train_df))]
-max_seq_length = int(np.percentile(seq_len, 75))
+max_seq_length = int(np.percentile(seq_len, 95))
 print ('max sequence length: ', max_seq_length)
 
 X = train_df[term_cols]
